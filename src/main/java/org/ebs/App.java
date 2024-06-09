@@ -23,7 +23,12 @@ public class App
 	private static final String BROKER_BOLT_2_ID = "broker_bolt_2";
 	private static final String BROKER_BOLT_3_ID = "broker_bolt_3";
 
+	private static final String SUBSCRIBER_BOLT_1_ID = "subscriber_bolt_1";
+	private static final String SUBSCRIBER_BOLT_2_ID = "subscriber_bolt_2";
+	private static final String SUBSCRIBER_BOLT_3_ID = "subscriber_bolt_3";
+
 	private static final String PUB_SUB_TOPOLOGY_NAME = "pub_sub_topology";
+	public static final String NOTIFICATION_STREAM = "notification_stream";
 
     public static void main( String[] args ) throws Exception
     {
@@ -52,6 +57,13 @@ public class App
 		builder.setBolt(BROKER_BOLT_1_ID, brokerBolt1).shuffleGrouping(brokerSubscriberList.get(0)).shuffleGrouping(PUBLISHER_SPOUT_1_ID);
 		builder.setBolt(BROKER_BOLT_2_ID, brokerBolt2).shuffleGrouping(brokerSubscriberList.get(1)).shuffleGrouping(PUBLISHER_SPOUT_1_ID);
 		builder.setBolt(BROKER_BOLT_3_ID, brokerBolt3).shuffleGrouping(brokerSubscriberList.get(2)).shuffleGrouping(PUBLISHER_SPOUT_1_ID);
+
+		SubscriberBolt subscriberBolt1 = new SubscriberBolt();
+		SubscriberBolt subscriberBolt2 = new SubscriberBolt();
+		SubscriberBolt subscriberBolt3 = new SubscriberBolt();
+		builder.setBolt(SUBSCRIBER_BOLT_1_ID, subscriberBolt1).shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM);
+		builder.setBolt(SUBSCRIBER_BOLT_2_ID, subscriberBolt2).shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM);
+		builder.setBolt(SUBSCRIBER_BOLT_3_ID, subscriberBolt3).shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
 
     	Config config = new Config();
 		config.setDebug(true);
