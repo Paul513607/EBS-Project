@@ -7,7 +7,8 @@ import org.apache.storm.generated.GlobalStreamId;
 import org.apache.storm.grouping.CustomStreamGrouping;
 import org.apache.storm.task.WorkerTopologyContext;
 
-public class MyGrouping implements CustomStreamGrouping {
+public class
+MyGrouping implements CustomStreamGrouping {
 	
 	ArrayList<Integer> targetTasks;
 	int taskcounter=1;
