@@ -37,6 +37,7 @@ public class BrokerBolt extends BaseRichBolt {
             String subscriberId = tuple.getStringByField("subscriberId");
             Subscription subscription = (Subscription) tuple.getValueByField("subscription");
             addSubscription(subscriberId, subscription);
+            collector.ack(tuple);
         } else {
             String company = tuple.getStringByField("company");
             double value = tuple.getDoubleByField("value");
@@ -54,6 +55,9 @@ public class BrokerBolt extends BaseRichBolt {
                     }
                 }
             }
+
+            collector.emit(App.PUBLICATION_STREAM, tuple, tuple.getValues());
+            collector.ack(tuple);
         }
     }
 
@@ -64,5 +68,6 @@ public class BrokerBolt extends BaseRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(App.NOTIFICATION_STREAM, new Fields("subscriberId", "company", "value", "drop", "variation", "date"));
+        declarer.declareStream(App.PUBLICATION_STREAM, new Fields("company", "value", "drop", "variation", "date"));
     }
 }
