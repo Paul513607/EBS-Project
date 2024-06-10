@@ -54,9 +54,9 @@ public class App
 		builder.setBolt(BROKER_BOLT_3_ID, brokerBolt3).shuffleGrouping(brokerSubscriberList.get(2)).shuffleGrouping(PUBLISHER_SPOUT_1_ID);
 
     	Config config = new Config();
-		config.setDebug(true);
-		config.put("publicationFilePath", "/home/paul/temp/publications1.txt");
-		config.put("subscriptionFilePath", "/home/paul/temp/subscriptions2.txt");
+		config.setDebug(false);
+		config.put("publicationFilePath", "/home/lev/Desktop/publications3.txt");
+		config.put("subscriptionFilePath", "/home/lev/Desktop/subscriptions3.txt");
     	
     	LocalCluster cluster = new LocalCluster();
     	StormTopology topology = builder.createTopology();
@@ -69,12 +69,19 @@ public class App
     	cluster.submitTopology(PUB_SUB_TOPOLOGY_NAME, config, topology);
     	
     	try {
-			Thread.sleep(20000);
+    		Thread.sleep(180000); 
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
+		int successCount = BrokerBolt.getSuccessCount();
+	    long totalLatency = BrokerBolt.getTotalLatency();
+	    double averageLatency = successCount > 0 ? (double) totalLatency / successCount : 0;
+
+	    System.out.println("The number of succesfully delivered subscriptions: " + successCount);
+	    System.out.println("Average delivery latency (ms): " + averageLatency);
+    	
     	cluster.killTopology(PUB_SUB_TOPOLOGY_NAME);
     	cluster.shutdown();
     	
