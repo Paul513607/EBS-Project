@@ -49,7 +49,7 @@ public class App
 
 		List<String> brokerSubscriberList = new ArrayList<>(List.of(SUBSCRIBER_SPOUT_1_ID, SUBSCRIBER_SPOUT_2_ID, SUBSCRIBER_SPOUT_3_ID));
 		App.subscriberIdsSet = new HashSet<>(brokerSubscriberList);
-		Collections.shuffle(brokerSubscriberList);
+		// Collections.shuffle(brokerSubscriberList);
 
 		SubscriberSpout subscriberSpout1 = new SubscriberSpout();
 		SubscriberSpout subscriberSpout2 = new SubscriberSpout();
@@ -61,42 +61,30 @@ public class App
 		BrokerBolt brokerBolt1 = new BrokerBolt();
 		BrokerBolt brokerBolt2 = new BrokerBolt();
 		BrokerBolt brokerBolt3 = new BrokerBolt();
-		builder.setBolt(BROKER_BOLT_1_ID, brokerBolt1).shuffleGrouping(brokerSubscriberList.get(0))
-				.shuffleGrouping(PUBLISHER_SPOUT_1_ID)
-				.customGrouping(SUBSCRIBER_SPOUT_1_ID, new SubscriberBalancedGrouping())
-				.customGrouping(SUBSCRIBER_SPOUT_2_ID, new SubscriberBalancedGrouping())
-				.customGrouping(SUBSCRIBER_SPOUT_3_ID, new SubscriberBalancedGrouping());
-		builder.setBolt(BROKER_BOLT_2_ID, brokerBolt2).shuffleGrouping(brokerSubscriberList.get(1))
-				.shuffleGrouping(BROKER_BOLT_1_ID, PUBLICATION_STREAM)
-				.customGrouping(SUBSCRIBER_SPOUT_1_ID, new SubscriberBalancedGrouping())
-				.customGrouping(SUBSCRIBER_SPOUT_2_ID, new SubscriberBalancedGrouping())
-				.customGrouping(SUBSCRIBER_SPOUT_3_ID, new SubscriberBalancedGrouping());
-		builder.setBolt(BROKER_BOLT_3_ID, brokerBolt3).shuffleGrouping(brokerSubscriberList.get(2))
-				.shuffleGrouping(BROKER_BOLT_2_ID, PUBLICATION_STREAM)
-				.customGrouping(SUBSCRIBER_SPOUT_1_ID, new SubscriberBalancedGrouping())
-				.customGrouping(SUBSCRIBER_SPOUT_2_ID, new SubscriberBalancedGrouping())
-				.customGrouping(SUBSCRIBER_SPOUT_3_ID, new SubscriberBalancedGrouping());
+		builder.setBolt(BROKER_BOLT_1_ID, brokerBolt1)
+				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
+				.shuffleGrouping(PUBLISHER_SPOUT_1_ID);
+		builder.setBolt(BROKER_BOLT_2_ID, brokerBolt2)
+				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
+				.shuffleGrouping(BROKER_BOLT_1_ID, PUBLICATION_STREAM);
+		builder.setBolt(BROKER_BOLT_3_ID, brokerBolt3)
+				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
+				.shuffleGrouping(BROKER_BOLT_2_ID, PUBLICATION_STREAM);
 
 		SubscriberBolt subscriberBolt1 = new SubscriberBolt();
 		SubscriberBolt subscriberBolt2 = new SubscriberBolt();
 		SubscriberBolt subscriberBolt3 = new SubscriberBolt();
 		builder.setBolt(SUBSCRIBER_BOLT_1_ID, subscriberBolt1)
-				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
+				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM);
 		builder.setBolt(SUBSCRIBER_BOLT_2_ID, subscriberBolt2)
-				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
-		builder.setBolt(SUBSCRIBER_BOLT_3_ID, subscriberBolt3).shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM);
+		builder.setBolt(SUBSCRIBER_BOLT_3_ID, subscriberBolt3)
 				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
 
     	Config config = new Config();
 		config.setDebug(false);
-		config.put("publicationFilePath", "/home/paul/temp/publications3.txt");
-		config.put("subscriptionFilePath", "/home/paul/temp/subscriptions3.txt");
+		config.put("publicationFilePath", "/home/paul/temp/publications4.txt");
+		config.put("subscriptionFilePath", "/home/paul/temp/subscriptions4.txt");
     	
     	LocalCluster cluster = new LocalCluster();
     	StormTopology topology = builder.createTopology();
@@ -121,7 +109,7 @@ public class App
 
 	    try {
 	        FileWriter myWriter = new FileWriter("filename.txt");
-	        myWriter.write("The number of successfully delivered subscriptions: " + successCount);
+	        myWriter.write("The number of successfully delivered notifications: " + successCount);
 	        myWriter.write("\nAverage delivery latency (ms): " + averageLatency);
 	        myWriter.close();
 	        System.out.println("Successfully wrote to the file.");

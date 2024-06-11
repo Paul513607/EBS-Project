@@ -1,2 +1,2 @@
-The number of successfully delivered subscriptions: 946193
-Average delivery latency (ms): 5717.7650363086605
+The number of successfully delivered notifications: 2165294
+Average delivery latency (ms): 6853.189210795394
