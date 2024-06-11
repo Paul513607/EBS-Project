@@ -63,11 +63,17 @@ public class App
 		BrokerBolt brokerBolt3 = new BrokerBolt();
 		builder.setBolt(BROKER_BOLT_1_ID, brokerBolt1)
 				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
+				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
+				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
 				.shuffleGrouping(PUBLISHER_SPOUT_1_ID);
 		builder.setBolt(BROKER_BOLT_2_ID, brokerBolt2)
+				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
+				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
 				.shuffleGrouping(BROKER_BOLT_1_ID, PUBLICATION_STREAM);
 		builder.setBolt(BROKER_BOLT_3_ID, brokerBolt3)
+				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
+				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
 				.shuffleGrouping(BROKER_BOLT_2_ID, PUBLICATION_STREAM);
 
