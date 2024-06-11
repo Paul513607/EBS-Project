@@ -25,13 +25,16 @@ public class SubscriberSpout extends BaseRichSpout {
     private String filePath;
     private Random random;
 
+    private String componentName;
+
     private static final Logger logger = LoggerFactory.getLogger(SubscriberSpout.class);
 
     @Override
-    public void open(Map<String, Object> map, TopologyContext topologyContext, SpoutOutputCollector collector) {
+    public void open(Map<String, Object> map, TopologyContext context, SpoutOutputCollector collector) {
         this.collector = collector;
         this.filePath = (String) map.get("subscriptionFilePath");
         this.random = new Random();
+        this.componentName = context.getThisComponentId();
         try {
             this.reader = new BufferedReader(new FileReader(filePath));
         } catch (IOException e) {
@@ -61,8 +64,8 @@ public class SubscriberSpout extends BaseRichSpout {
                 }
 
                 // Random subscriber id
-                String subscriberId = "subscriber" + random.nextInt(3);
-                logger.info(subscriberId + " " + subscription);
+                String subscriberId = this.componentName;
+                logger.info("{} {}", subscriberId, subscription);
 
                 collector.emit(new Values(subscriberId, subscription));
             } else {

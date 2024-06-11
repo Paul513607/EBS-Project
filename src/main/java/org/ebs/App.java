@@ -5,7 +5,11 @@ import org.apache.storm.LocalCluster;
 import org.apache.storm.generated.StormTopology;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -23,7 +27,15 @@ public class App
 	private static final String BROKER_BOLT_2_ID = "broker_bolt_2";
 	private static final String BROKER_BOLT_3_ID = "broker_bolt_3";
 
+	private static final String SUBSCRIBER_BOLT_1_ID = "subscriber_bolt_1";
+	private static final String SUBSCRIBER_BOLT_2_ID = "subscriber_bolt_2";
+	private static final String SUBSCRIBER_BOLT_3_ID = "subscriber_bolt_3";
+
 	private static final String PUB_SUB_TOPOLOGY_NAME = "pub_sub_topology";
+	public static final String NOTIFICATION_STREAM = "notification_stream";
+	public static final String PUBLICATION_STREAM = "publication_stream";
+	
+	private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main( String[] args ) throws Exception
     {
@@ -49,9 +61,37 @@ public class App
 		BrokerBolt brokerBolt1 = new BrokerBolt();
 		BrokerBolt brokerBolt2 = new BrokerBolt();
 		BrokerBolt brokerBolt3 = new BrokerBolt();
-		builder.setBolt(BROKER_BOLT_1_ID, brokerBolt1).shuffleGrouping(brokerSubscriberList.get(0)).shuffleGrouping(PUBLISHER_SPOUT_1_ID);
-		builder.setBolt(BROKER_BOLT_2_ID, brokerBolt2).shuffleGrouping(brokerSubscriberList.get(1)).shuffleGrouping(PUBLISHER_SPOUT_1_ID);
-		builder.setBolt(BROKER_BOLT_3_ID, brokerBolt3).shuffleGrouping(brokerSubscriberList.get(2)).shuffleGrouping(PUBLISHER_SPOUT_1_ID);
+		builder.setBolt(BROKER_BOLT_1_ID, brokerBolt1).shuffleGrouping(brokerSubscriberList.get(0))
+				.shuffleGrouping(PUBLISHER_SPOUT_1_ID)
+				.customGrouping(SUBSCRIBER_SPOUT_1_ID, new SubscriberBalancedGrouping())
+				.customGrouping(SUBSCRIBER_SPOUT_2_ID, new SubscriberBalancedGrouping())
+				.customGrouping(SUBSCRIBER_SPOUT_3_ID, new SubscriberBalancedGrouping());
+		builder.setBolt(BROKER_BOLT_2_ID, brokerBolt2).shuffleGrouping(brokerSubscriberList.get(1))
+				.shuffleGrouping(BROKER_BOLT_1_ID, PUBLICATION_STREAM)
+				.customGrouping(SUBSCRIBER_SPOUT_1_ID, new SubscriberBalancedGrouping())
+				.customGrouping(SUBSCRIBER_SPOUT_2_ID, new SubscriberBalancedGrouping())
+				.customGrouping(SUBSCRIBER_SPOUT_3_ID, new SubscriberBalancedGrouping());
+		builder.setBolt(BROKER_BOLT_3_ID, brokerBolt3).shuffleGrouping(brokerSubscriberList.get(2))
+				.shuffleGrouping(BROKER_BOLT_2_ID, PUBLICATION_STREAM)
+				.customGrouping(SUBSCRIBER_SPOUT_1_ID, new SubscriberBalancedGrouping())
+				.customGrouping(SUBSCRIBER_SPOUT_2_ID, new SubscriberBalancedGrouping())
+				.customGrouping(SUBSCRIBER_SPOUT_3_ID, new SubscriberBalancedGrouping());
+
+		SubscriberBolt subscriberBolt1 = new SubscriberBolt();
+		SubscriberBolt subscriberBolt2 = new SubscriberBolt();
+		SubscriberBolt subscriberBolt3 = new SubscriberBolt();
+		builder.setBolt(SUBSCRIBER_BOLT_1_ID, subscriberBolt1)
+				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
+		builder.setBolt(SUBSCRIBER_BOLT_2_ID, subscriberBolt2)
+				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
+		builder.setBolt(SUBSCRIBER_BOLT_3_ID, subscriberBolt3).shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
 
     	Config config = new Config();
 		config.setDebug(false);
@@ -79,9 +119,17 @@ public class App
 	    long totalLatency = BrokerBolt.getTotalLatency();
 	    double averageLatency = successCount > 0 ? (double) totalLatency / successCount : 0;
 
-	    System.out.println("The number of succesfully delivered subscriptions: " + successCount);
-	    System.out.println("Average delivery latency (ms): " + averageLatency);
-    	
+	    try {
+	        FileWriter myWriter = new FileWriter("filename.txt");
+	        myWriter.write("The number of succesfully delivered subscriptions: " + successCount);
+	        myWriter.write("Average delivery latency (ms): " + averageLatency);
+	        myWriter.close();
+	        System.out.println("Successfully wrote to the file.");
+	      } catch (IOException e) {
+	        System.out.println("An error occurred.");
+	        e.printStackTrace();
+	      }
+	    
     	cluster.killTopology(PUB_SUB_TOPOLOGY_NAME);
     	cluster.shutdown();
     	

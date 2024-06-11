@@ -1,0 +1,1 @@
+The number of succesfully delivered subscriptions: 2143076Average delivery latency (ms): 24389.12176329724

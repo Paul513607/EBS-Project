@@ -42,6 +42,7 @@ public class BrokerBolt extends BaseRichBolt {
             String subscriberId = tuple.getStringByField("subscriberId");
             Subscription subscription = (Subscription) tuple.getValueByField("subscription");
             addSubscription(subscriberId, subscription);
+            collector.ack(tuple);
         } else {
             String company = tuple.getStringByField("company");
             double value = tuple.getDoubleByField("value");
@@ -56,11 +57,9 @@ public class BrokerBolt extends BaseRichBolt {
             for (Map.Entry<String, List<Subscription>> entry : subscriptions.entrySet()) {
                 for (Subscription subscription : entry.getValue()) {
                     if (subscription.matches(company, value, drop, variation, date)) {
-                        logger.info("Broker " + this.componentId + " matched publication \n"
-                            + "{(company," + company + ");(value," + value + ");(drop," + drop + ");(variation," + variation + ");(date," + date + ")}\n"
-                            + "with subscription\n"
-                            + subscription + " for subscriberId " + entry.getKey());
-                        collector.emit("notification-stream", new Values(entry.getKey(), company, value, drop, variation, date));
+                    	 logger.info("Broker {} matched publication \n{(company,{});(value,{});(drop,{});(variation,{});(date,{})}\nwith subscription\n{} for subscriberId {}",
+                                 this.componentId, company, value, drop, variation, date, subscription, entry.getKey());
+                         collector.emit(App.NOTIFICATION_STREAM, new Values(entry.getKey(), company, value, drop, variation, date));
                     
                         // Update statistics
                         successCount.incrementAndGet();
@@ -68,6 +67,9 @@ public class BrokerBolt extends BaseRichBolt {
                     }
                 }
             }
+
+            collector.emit(App.PUBLICATION_STREAM, tuple, tuple.getValues());
+            collector.ack(tuple);
         }
     }
 
@@ -77,7 +79,8 @@ public class BrokerBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declareStream("notification-stream", new Fields("subscriberId", "company", "value", "drop", "variation", "date"));
+        declarer.declareStream(App.NOTIFICATION_STREAM, new Fields("subscriberId", "company", "value", "drop", "variation", "date"));
+        declarer.declareStream(App.PUBLICATION_STREAM, new Fields("company", "value", "drop", "variation", "date", "timestamp"));
     }
     
     public static int getSuccessCount() {
