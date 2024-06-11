@@ -22,7 +22,7 @@ public class SubscriberBalancedGrouping implements CustomStreamGrouping {
 
 	@Override
 	public List<Integer> chooseTasks(int taskId, List<Object> values) {
-		String subscriberId = (String) values.get(0);  // Assuming the subscriber ID is the first value in the tuple
+		String subscriberId = (String) values.get(0);
 		if (!subscriberTaskMap.containsKey(subscriberId)) {
 			subscriberTaskMap.put(subscriberId, targetTasks.get(index));
 			index = (index + 1) % targetTasks.size();
