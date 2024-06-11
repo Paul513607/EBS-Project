@@ -13,12 +13,14 @@ import java.util.Map;
 
 public class SubscriberBolt extends BaseRichBolt {
     private OutputCollector collector;
+    private String componentName;
 
     private static final Logger logger = LoggerFactory.getLogger(SubscriberBolt.class);
 
     @Override
     public void prepare(Map<String, Object> map, TopologyContext topologyContext, OutputCollector outputCollector) {
         this.collector = outputCollector;
+        this.componentName = topologyContext.getThisComponentId();
     }
 
     @Override
@@ -31,8 +33,8 @@ public class SubscriberBolt extends BaseRichBolt {
         double variation = tuple.getDoubleByField("variation");
         String date = tuple.getStringByField("date");
 
-        logger.info("Subscriber {} received notification: company: {}, value: {}, drop: {}, variation: {}, date: {}",
-                subscriberId, company, value, drop, variation, date);
+        logger.info("Subscriber {} received notification: company: {}, value: {}, drop: {}, variation: {}, date: {} from {}",
+                subscriberId, company, value, drop, variation, date, this.componentName);
         collector.ack(tuple);
     }
 

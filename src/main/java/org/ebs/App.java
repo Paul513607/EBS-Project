@@ -75,19 +75,19 @@ public class App
 		SubscriberBolt subscriberBolt2 = new SubscriberBolt();
 		SubscriberBolt subscriberBolt3 = new SubscriberBolt();
 		builder.setBolt(SUBSCRIBER_BOLT_1_ID, subscriberBolt1)
-				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
+				.fieldsGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
+				.fieldsGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
+				.fieldsGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM, new Fields("subscriberId"));
 		builder.setBolt(SUBSCRIBER_BOLT_2_ID, subscriberBolt2)
-				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
+				.fieldsGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
+				.fieldsGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
+				.fieldsGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM, new Fields("subscriberId"));
 		builder.setBolt(SUBSCRIBER_BOLT_3_ID, subscriberBolt3).shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
-				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
+				.fieldsGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
+				.fieldsGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
+				.fieldsGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM, new Fields("subscriberId"));
 
-    	Config config = new Config();
+		Config config = new Config();
 		config.setDebug(true);
 		config.put("publicationFilePath", "/home/paul/temp/publications2.txt");
 		config.put("subscriptionFilePath", "/home/paul/temp/subscriptions2.txt");
