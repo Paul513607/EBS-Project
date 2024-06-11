@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class PublisherSpout extends BaseRichSpout {
@@ -54,9 +56,11 @@ public class PublisherSpout extends BaseRichSpout {
                 double drop = Double.parseDouble(partsList.get(2).split(",")[1]);
                 double variation = Double.parseDouble(partsList.get(3).split(",")[1]);
                 String date = partsList.get(4).split(",")[1].replace("}", "").trim();
+                
+                long timestamp = System.currentTimeMillis();
                 logger.info(Arrays.toString(parts));
 
-                this.collector.emit(new Values(company, value, drop, variation, date));
+                this.collector.emit(new Values(company, value, drop, variation, date, timestamp));
             } else {
                 Utils.sleep(1000);  // Wait for a second if there are no new lines
             }
@@ -67,6 +71,6 @@ public class PublisherSpout extends BaseRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("company", "value", "drop", "variation", "date"));
+        declarer.declare(new Fields("company", "value", "drop", "variation", "date", "timestamp"));
     }
 }

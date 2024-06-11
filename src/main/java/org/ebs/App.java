@@ -5,7 +5,11 @@ import org.apache.storm.LocalCluster;
 import org.apache.storm.generated.StormTopology;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,6 +34,8 @@ public class App
 	private static final String PUB_SUB_TOPOLOGY_NAME = "pub_sub_topology";
 	public static final String NOTIFICATION_STREAM = "notification_stream";
 	public static final String PUBLICATION_STREAM = "publication_stream";
+
+	private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main( String[] args ) throws Exception
     {
@@ -75,22 +81,22 @@ public class App
 		SubscriberBolt subscriberBolt2 = new SubscriberBolt();
 		SubscriberBolt subscriberBolt3 = new SubscriberBolt();
 		builder.setBolt(SUBSCRIBER_BOLT_1_ID, subscriberBolt1)
-				.fieldsGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
-				.fieldsGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
-				.fieldsGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM, new Fields("subscriberId"));
+				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
 		builder.setBolt(SUBSCRIBER_BOLT_2_ID, subscriberBolt2)
-				.fieldsGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
-				.fieldsGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
-				.fieldsGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM, new Fields("subscriberId"));
+				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
 		builder.setBolt(SUBSCRIBER_BOLT_3_ID, subscriberBolt3).shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM)
-				.fieldsGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
-				.fieldsGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM, new Fields("subscriberId"))
-				.fieldsGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM, new Fields("subscriberId"));
+				.shuffleGrouping(BROKER_BOLT_1_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_2_ID, NOTIFICATION_STREAM)
+				.shuffleGrouping(BROKER_BOLT_3_ID, NOTIFICATION_STREAM);
 
-		Config config = new Config();
-		config.setDebug(true);
-		config.put("publicationFilePath", "/home/paul/temp/publications2.txt");
-		config.put("subscriptionFilePath", "/home/paul/temp/subscriptions2.txt");
+    	Config config = new Config();
+		config.setDebug(false);
+		config.put("publicationFilePath", "/home/paul/temp/publications3.txt");
+		config.put("subscriptionFilePath", "/home/paul/temp/subscriptions3.txt");
     	
     	LocalCluster cluster = new LocalCluster();
     	StormTopology topology = builder.createTopology();
@@ -108,6 +114,21 @@ public class App
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		int successCount = BrokerBolt.getSuccessCount();
+	    long totalLatency = BrokerBolt.getTotalLatency();
+	    double averageLatency = successCount > 0 ? (double) totalLatency / successCount : 0;
+
+	    try {
+	        FileWriter myWriter = new FileWriter("filename.txt");
+	        myWriter.write("The number of successfully delivered subscriptions: " + successCount);
+	        myWriter.write("\nAverage delivery latency (ms): " + averageLatency);
+	        myWriter.close();
+	        System.out.println("Successfully wrote to the file.");
+	      } catch (IOException e) {
+	        System.out.println("An error occurred.");
+	        e.printStackTrace();
+	      }
 
     	cluster.killTopology(PUB_SUB_TOPOLOGY_NAME);
     	cluster.shutdown();

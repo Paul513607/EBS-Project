@@ -15,11 +15,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class BrokerBolt extends BaseRichBolt {
     private OutputCollector collector;
     private Map<String, List<Subscription>> subscriptions;
     private String componentId;
+    
+    private static final AtomicInteger successCount = new AtomicInteger(0);
+    private static final AtomicLong totalLatency = new AtomicLong(0);
 
     @Override
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
@@ -44,14 +49,21 @@ public class BrokerBolt extends BaseRichBolt {
             double drop = tuple.getDoubleByField("drop");
             double variation = tuple.getDoubleByField("variation");
             String date = tuple.getStringByField("date");
+            long publishTimestamp = tuple.getLongByField("timestamp");
+            long receiveTimestamp = System.currentTimeMillis();
+            long latency = receiveTimestamp - publishTimestamp;
 
             // Match publication against subscriptions
             for (Map.Entry<String, List<Subscription>> entry : subscriptions.entrySet()) {
                 for (Subscription subscription : entry.getValue()) {
                     if (subscription.matches(company, value, drop, variation, date)) {
-                        logger.info("Broker {} matched publication \n{(company,{});(value,{});(drop,{});(variation,{});(date,{})}\nwith subscription\n{} for subscriberId {}",
-                                this.componentId, company, value, drop, variation, date, subscription, entry.getKey());
-                        collector.emit(App.NOTIFICATION_STREAM, new Values(entry.getKey(), company, value, drop, variation, date));
+                    	 logger.info("Broker {} matched publication \n{(company,{});(value,{});(drop,{});(variation,{});(date,{})}\nwith subscription\n{} for subscriberId {}",
+                                 this.componentId, company, value, drop, variation, date, subscription, entry.getKey());
+                         collector.emit(App.NOTIFICATION_STREAM, new Values(entry.getKey(), company, value, drop, variation, date));
+                    
+                        // Update statistics
+                        successCount.incrementAndGet();
+                        totalLatency.addAndGet(latency);
                     }
                 }
             }
@@ -68,6 +80,14 @@ public class BrokerBolt extends BaseRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(App.NOTIFICATION_STREAM, new Fields("subscriberId", "company", "value", "drop", "variation", "date"));
-        declarer.declareStream(App.PUBLICATION_STREAM, new Fields("company", "value", "drop", "variation", "date"));
+        declarer.declareStream(App.PUBLICATION_STREAM, new Fields("company", "value", "drop", "variation", "date", "timestamp"));
+    }
+    
+    public static int getSuccessCount() {
+        return successCount.get();
+    }
+
+    public static long getTotalLatency() {
+        return totalLatency.get();
     }
 }
