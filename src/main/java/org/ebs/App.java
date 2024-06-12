@@ -44,7 +44,7 @@ public class App
 
 		PublisherSpout publisherSpout1 = new PublisherSpout();
 		//PublisherSpout publisherSpout2 = new PublisherSpout();
-		builder.setSpout(PUBLISHER_SPOUT_1_ID, publisherSpout1, 2);
+		builder.setSpout(PUBLISHER_SPOUT_1_ID, publisherSpout1);
 		//builder.setSpout(PUBLISHER_SPOUT_2_ID, publisherSpout2, 2);
 
 		List<String> brokerSubscriberList = new ArrayList<>(List.of(SUBSCRIBER_SPOUT_1_ID, SUBSCRIBER_SPOUT_2_ID, SUBSCRIBER_SPOUT_3_ID));
@@ -62,16 +62,19 @@ public class App
 		BrokerBolt brokerBolt2 = new BrokerBolt();
 		BrokerBolt brokerBolt3 = new BrokerBolt();
 		builder.setBolt(BROKER_BOLT_1_ID, brokerBolt1)
+				.setNumTasks(3)
 				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
 				.shuffleGrouping(PUBLISHER_SPOUT_1_ID);
 		builder.setBolt(BROKER_BOLT_2_ID, brokerBolt2)
+				.setNumTasks(3)
 				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
 				.shuffleGrouping(BROKER_BOLT_1_ID, PUBLICATION_STREAM);
 		builder.setBolt(BROKER_BOLT_3_ID, brokerBolt3)
+				.setNumTasks(3)
 				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
@@ -89,8 +92,8 @@ public class App
 
     	Config config = new Config();
 		config.setDebug(false);
-		config.put("publicationFilePath", "/home/paul/temp/publications4.txt");
-		config.put("subscriptionFilePath", "/home/paul/temp/subscriptions4.txt");
+		config.put("publicationFilePath", "/home/paul/Downloads/publications6.txt");
+		config.put("subscriptionFilePath", "/home/paul/Downloads/subscriptions6.txt");
     	
     	LocalCluster cluster = new LocalCluster();
     	StormTopology topology = builder.createTopology();
@@ -109,8 +112,8 @@ public class App
 			e.printStackTrace();
 		}
 
-		int successCount = BrokerBolt.getSuccessCount();
-	    long totalLatency = BrokerBolt.getTotalLatency();
+		int successCount = SubscriberBolt.getSuccessCount1();
+	    long totalLatency = SubscriberBolt.getTotalLatency1();
 	    double averageLatency = successCount > 0 ? (double) totalLatency / successCount : 0;
 
 	    try {

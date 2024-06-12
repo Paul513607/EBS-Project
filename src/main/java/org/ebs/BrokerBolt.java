@@ -49,9 +49,9 @@ public class BrokerBolt extends BaseRichBolt {
             double drop = tuple.getDoubleByField("drop");
             double variation = tuple.getDoubleByField("variation");
             String date = tuple.getStringByField("date");
-            long publishTimestamp = tuple.getLongByField("timestamp");
+            long timestamp = tuple.getLongByField("timestamp");
             long receiveTimestamp = System.currentTimeMillis();
-            long latency = receiveTimestamp - publishTimestamp;
+            long latency = receiveTimestamp - timestamp;
 
             // Match publication against subscriptions
             for (Map.Entry<String, List<Subscription>> entry : subscriptions.entrySet()) {
@@ -59,11 +59,11 @@ public class BrokerBolt extends BaseRichBolt {
                     if (subscription.matches(company, value, drop, variation, date)) {
                     	 logger.info("Broker {} matched publication \n{(company,{});(value,{});(drop,{});(variation,{});(date,{})}\nwith subscription\n{} for subscriberId {}",
                                  this.componentId, company, value, drop, variation, date, subscription, entry.getKey());
-                         collector.emit(App.NOTIFICATION_STREAM, new Values(entry.getKey(), company, value, drop, variation, date));
+                         collector.emit(App.NOTIFICATION_STREAM, new Values(entry.getKey(), company, value, drop, variation, date, timestamp));
                     
                         // Update statistics
-                        successCount.incrementAndGet();
-                        totalLatency.addAndGet(latency);
+//                        successCount.incrementAndGet();
+//                        totalLatency.addAndGet(latency);
                     }
                 }
             }
@@ -79,7 +79,7 @@ public class BrokerBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declareStream(App.NOTIFICATION_STREAM, new Fields("subscriberId", "company", "value", "drop", "variation", "date"));
+        declarer.declareStream(App.NOTIFICATION_STREAM, new Fields("subscriberId", "company", "value", "drop", "variation", "date", "timestamp"));
         declarer.declareStream(App.PUBLICATION_STREAM, new Fields("company", "value", "drop", "variation", "date", "timestamp"));
     }
     
