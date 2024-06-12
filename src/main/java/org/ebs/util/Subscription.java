@@ -33,16 +33,16 @@ public class Subscription implements Serializable {
                 predicate = Object::equals;
                 break;
             case ">":
-                predicate = (a, b) -> ((Comparable) a).compareTo(b) > 0;
-                break;
-            case ">=":
-                predicate = (a, b) -> ((Comparable) a).compareTo(b) >= 0;
-                break;
-            case "<":
                 predicate = (a, b) -> ((Comparable) a).compareTo(b) < 0;
                 break;
-            case "<=":
+            case ">=":
                 predicate = (a, b) -> ((Comparable) a).compareTo(b) <= 0;
+                break;
+            case "<":
+                predicate = (a, b) -> ((Comparable) a).compareTo(b) > 0;
+                break;
+            case "<=":
+                predicate = (a, b) -> ((Comparable) a).compareTo(b) >= 0;
                 break;
             default:
                 throw new IllegalArgumentException("Unknown operator: " + operator);

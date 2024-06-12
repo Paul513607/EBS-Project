@@ -1,2 +1,2 @@
-The number of successfully delivered notifications: 369786
-Average delivery latency (ms): 1472.5675147247327
+The number of successfully delivered notifications: 1427128
+Average delivery latency (ms): 4880.098870598853

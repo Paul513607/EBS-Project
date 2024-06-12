@@ -63,9 +63,8 @@ public class SubscriberSpout extends BaseRichSpout {
                     subscription.addCriterion(field, operator, value);
                 }
 
-                // Random subscriber id
                 String subscriberId = this.componentName;
-                logger.info("{} {}", subscriberId, subscription);
+                // logger.info("{} {}", subscriberId, subscription);
 
                 collector.emit(new Values(subscriberId, subscription));
             } else {

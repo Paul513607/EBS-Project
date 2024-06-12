@@ -49,7 +49,7 @@ public class App
 
 		List<String> brokerSubscriberList = new ArrayList<>(List.of(SUBSCRIBER_SPOUT_1_ID, SUBSCRIBER_SPOUT_2_ID, SUBSCRIBER_SPOUT_3_ID));
 		App.subscriberIdsSet = new HashSet<>(brokerSubscriberList);
-		// Collections.shuffle(brokerSubscriberList);
+		Collections.shuffle(brokerSubscriberList);
 
 		SubscriberSpout subscriberSpout1 = new SubscriberSpout();
 		SubscriberSpout subscriberSpout2 = new SubscriberSpout();
@@ -64,19 +64,13 @@ public class App
 		builder.setBolt(BROKER_BOLT_1_ID, brokerBolt1)
 				.setNumTasks(3)
 				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
-				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
-				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
 				.shuffleGrouping(PUBLISHER_SPOUT_1_ID);
 		builder.setBolt(BROKER_BOLT_2_ID, brokerBolt2)
 				.setNumTasks(3)
-				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
-				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
 				.shuffleGrouping(BROKER_BOLT_1_ID, PUBLICATION_STREAM);
 		builder.setBolt(BROKER_BOLT_3_ID, brokerBolt3)
 				.setNumTasks(3)
-				.customGrouping(brokerSubscriberList.get(0), new SubscriberBalancedGrouping())
-				.customGrouping(brokerSubscriberList.get(1), new SubscriberBalancedGrouping())
 				.customGrouping(brokerSubscriberList.get(2), new SubscriberBalancedGrouping())
 				.shuffleGrouping(BROKER_BOLT_2_ID, PUBLICATION_STREAM);
 
@@ -92,8 +86,8 @@ public class App
 
     	Config config = new Config();
 		config.setDebug(false);
-		config.put("publicationFilePath", "/home/paul/Downloads/publications6.txt");
-		config.put("subscriptionFilePath", "/home/paul/Downloads/subscriptions6.txt");
+		config.put("publicationFilePath", "/home/paul/temp/publications_25.txt");
+		config.put("subscriptionFilePath", "/home/paul/temp/subscriptions_25.txt");
     	
     	LocalCluster cluster = new LocalCluster();
     	StormTopology topology = builder.createTopology();
